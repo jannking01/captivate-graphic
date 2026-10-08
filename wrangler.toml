@@ -1,8 +1,17 @@
 name = "captivate-graphics"
+main = "src/worker.js"
 compatibility_date = "2026-09-01"
 routes = [
   { pattern = "captivate.driveninc.com/create-your-graphic*", zone_name = "driveninc.com" }
 ]
 
+# Stores the "graphics created" total. Uses the same database as the leaderboard,
+# in its own table (graphic_counter), which is created automatically.
+[[d1_databases]]
+binding = "DB"
+database_name = "thrivecart-affiliates"
+database_id = "2a60fb49-80b3-4af2-a825-68264ec761b5"
+
 [assets]
 directory = "./public"
+binding = "ASSETS"
