@@ -5,6 +5,7 @@
 
 const COUNTER = "captivate";
 let tableReady = false;
+let cached = { at: 0, total: null };
 
 async function ensureTable(env) {
   if (tableReady) return;
@@ -34,8 +35,13 @@ export default {
       await ensureTable(env);
 
       if (request.method === "GET") {
-        const row = await env.DB.prepare("SELECT total FROM graphic_counter WHERE id = ?").bind(COUNTER).first();
-        return json({ total: row ? row.total : 0 });
+        // Many open pages check every few seconds; they share one database read per 2 seconds
+        const now = Date.now();
+        if (cached.total === null || now - cached.at > 2000) {
+          const row = await env.DB.prepare("SELECT total FROM graphic_counter WHERE id = ?").bind(COUNTER).first();
+          cached = { at: now, total: row ? row.total : 0 };
+        }
+        return json({ total: cached.total });
       }
 
       if (request.method === "POST") {
@@ -49,7 +55,8 @@ export default {
         }
         const row = await env.DB.prepare("UPDATE graphic_counter SET total = total + 1 WHERE id = ? RETURNING total")
           .bind(COUNTER).first();
-        return json({ total: row ? row.total : 0 });
+        cached = { at: Date.now(), total: row ? row.total : 0 };
+        return json({ total: cached.total });
       }
 
       return json({ error: "method not allowed" }, 405);
