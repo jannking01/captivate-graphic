@@ -156,7 +156,9 @@
   .field small.err { color: #b00020; }
   .field small.ok { color: #2f7a4a; }
 
-  .counter { align-self: center; margin-top: -2px; display: inline-flex; align-items: baseline; gap: 8px;
+  .side { display: flex; flex-direction: column; align-items: center; width: min(92vw, 540px); }
+  .side .card { width: 100%; }
+  .counter { margin-top: 18px; display: inline-flex; align-items: baseline; gap: 8px;
              padding: 6px 16px; border-radius: 999px; background: rgba(255,255,255,.7);
              border: 1px solid #ecd9de; font-size: .85rem; color: var(--muted); }
   .counter b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.5rem;
@@ -176,7 +178,8 @@
       gap: 36px; align-items: start; justify-content: center; width: 100%; max-width: 1000px;
     }
     .workspace .frame { width: 100%; }
-    .workspace .card { margin-top: 0; width: 100%; position: sticky; top: 24px; }
+    .workspace .side { width: 100%; position: sticky; top: 24px; }
+    .workspace .card { margin-top: 0; }
     footer { max-width: none; }
     .footer-line { white-space: nowrap; }
   }
@@ -210,6 +213,7 @@
   </div>
 </div>
 
+<div class="side">
 <div class="card">
   <input type="file" id="file" accept="image/jpeg,image/png,image/webp">
   <button class="upload-btn" id="pick">Choose Your Headshot</button>
@@ -224,7 +228,8 @@
   </div>
   <div class="msg" id="msg">Your photo stays on your device. Drag it to center your face.</div>
   <button class="download-btn" id="dl" disabled>Download My Graphic</button>
-  <div class="counter" id="counter" hidden><b id="total">0</b> <span id="totalLabel">graphics created</span></div>
+</div>
+<div class="counter" id="counter" hidden><b id="total">0</b> <span id="totalLabel">graphics created</span></div>
 </div>
 </div>
 
@@ -324,12 +329,27 @@ const totalEl = document.getElementById('total');
 const totalLabel = document.getElementById('totalLabel');
 function showTotal(n, bump) {
   if (typeof n !== 'number') return;
+  shown = n;
   totalEl.textContent = n.toLocaleString('en-US');
   totalLabel.textContent = n === 1 ? 'graphic created' : 'graphics created';
   counterEl.hidden = false;
   if (bump) { totalEl.classList.remove('bump'); void totalEl.offsetWidth; totalEl.classList.add('bump'); }
 }
-fetch(COUNT_API, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => d && showTotal(d.total)).catch(() => {});
+let shown = null;
+function refreshTotal() {
+  fetch(COUNT_API, { cache: 'no-store' }).then(r => r.ok ? r.json() : null)
+    .then(d => { if (d && d.total !== shown) { showTotal(d.total, shown !== null); } })
+    .catch(() => {});
+}
+// Live: check every 5 seconds while the page is open, pause when it's in the background
+let liveTimer = null;
+function startLive() { if (!liveTimer) liveTimer = setInterval(refreshTotal, 5000); }
+function stopLive() { clearInterval(liveTimer); liveTimer = null; }
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) stopLive(); else { refreshTotal(); startLive(); }
+});
+refreshTotal();
+startLive();
 function countDownload() {
   fetch(COUNT_API, { method: 'POST', keepalive: true, cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => d && showTotal(d.total, true)).catch(() => {});
 }
