@@ -156,7 +156,7 @@
   .field small.err { color: #b00020; }
   .field small.ok { color: #2f7a4a; }
 
-  .counter { margin-top: 14px; display: inline-flex; align-items: baseline; gap: 8px;
+  .counter { align-self: center; margin-top: -2px; display: inline-flex; align-items: baseline; gap: 8px;
              padding: 6px 16px; border-radius: 999px; background: rgba(255,255,255,.7);
              border: 1px solid #ecd9de; font-size: .85rem; color: var(--muted); }
   .counter b { font-family: 'Bebas Neue', sans-serif; font-weight: 400; font-size: 1.5rem;
@@ -192,7 +192,6 @@
   <div class="eyebrow">Speaking Event</div>
   <h1>Captivate</h1>
   <div class="script">Create your graphic</div>
-  <div class="counter" id="counter" hidden><b id="total">0</b> <span id="totalLabel">graphics created</span></div>
 </header>
 
 <div class="steps">
@@ -225,6 +224,7 @@
   </div>
   <div class="msg" id="msg">Your photo stays on your device. Drag it to center your face.</div>
   <button class="download-btn" id="dl" disabled>Download My Graphic</button>
+  <div class="counter" id="counter" hidden><b id="total">0</b> <span id="totalLabel">graphics created</span></div>
 </div>
 </div>
 
@@ -331,7 +331,7 @@ function showTotal(n, bump) {
 }
 fetch(COUNT_API, { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => d && showTotal(d.total)).catch(() => {});
 function countDownload() {
-  fetch(COUNT_API, { method: 'POST' }).then(r => r.ok ? r.json() : null).then(d => d && showTotal(d.total, true)).catch(() => {});
+  fetch(COUNT_API, { method: 'POST', keepalive: true, cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(d => d && showTotal(d.total, true)).catch(() => {});
 }
 
 tpl.onload = () => { ready = true; draw(); };
@@ -452,6 +452,7 @@ canvas.addEventListener('pointerup', endDrag);
 canvas.addEventListener('pointercancel', endDrag);
 
 dlBtn.addEventListener('click', () => {
+  countDownload();   // count right away; phones may leave the page to show the image
   canvas.toBlob(blob => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -462,7 +463,6 @@ dlBtn.addEventListener('click', () => {
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     setStep(2);
-    countDownload();
     setMsg('Your graphic is downloaded. Share it and show us your Captivate pride!');
   }, 'image/png');
 });
