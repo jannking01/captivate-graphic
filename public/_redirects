@@ -1,0 +1,2 @@
+/create-your-graphics /create-your-graphic/ 301
+/create-your-graphics/* /create-your-graphic/:splat 301

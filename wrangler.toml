@@ -1,0 +1,8 @@
+name = "captivate-graphics"
+compatibility_date = "2026-09-01"
+routes = [
+  { pattern = "captivate.driveninc.com/create-your-graphic*", zone_name = "driveninc.com" }
+]
+
+[assets]
+directory = "./public"
