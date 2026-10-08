@@ -40,8 +40,13 @@ export default {
 
       if (request.method === "POST") {
         // Only count downloads made from this page
+        // Some phone and in-app browsers send no Origin or "null"; only block clearly foreign sites
         const origin = request.headers.get("Origin");
-        if (origin && new URL(origin).host !== url.host) return json({ error: "forbidden" }, 403);
+        if (origin && origin !== "null") {
+          let host = null;
+          try { host = new URL(origin).host; } catch (e) {}
+          if (host && host !== url.host) return json({ error: "forbidden" }, 403);
+        }
         const row = await env.DB.prepare("UPDATE graphic_counter SET total = total + 1 WHERE id = ? RETURNING total")
           .bind(COUNTER).first();
         return json({ total: row ? row.total : 0 });
